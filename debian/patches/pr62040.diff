@@ -1,0 +1,89 @@
+# DP: Proposed patch for PR target/62040 (AArch64).
+
+2014-08-19  Guozhi Wei  <carrot@google.com>
+
+        PR target/62040
+        * config/aarch64/iterators.md (VQ_NO2E, VQ_2E): New iterators.
+        * config/aarch64/aarch64-simd.md (move_lo_quad_internal_<mode>): Split
+        it into two patterns.
+        (move_lo_quad_internal_be_<mode>): Likewise.
+
+--- a/src/gcc/config/aarch64/iterators.md
++++ b/src/gcc/config/aarch64/iterators.md
+@@ -66,6 +66,12 @@
+ ;; Quad vector modes.
+ (define_mode_iterator VQ [V16QI V8HI V4SI V2DI V4SF V2DF])
+ 
++;; VQ without 2 element modes.
++(define_mode_iterator VQ_NO2E [V16QI V8HI V4SI V4SF])
++
++;; Quad vector with only 2 element modes.
++(define_mode_iterator VQ_2E [V2DI V2DF])
++
+ ;; All vector modes, except double.
+ (define_mode_iterator VQ_S [V8QI V16QI V4HI V8HI V2SI V4SI])
+ 
+--- a/src/gcc/config/aarch64/aarch64-simd.md
++++ b/src/gcc/config/aarch64/aarch64-simd.md
+@@ -953,8 +953,8 @@
+ ;; On big-endian this is { zeroes, operand }
+ 
+ (define_insn "move_lo_quad_internal_<mode>"
+-  [(set (match_operand:VQ 0 "register_operand" "=w,w,w")
+-        (vec_concat:VQ
++  [(set (match_operand:VQ_NO2E 0 "register_operand" "=w,w,w")
++	(vec_concat:VQ_NO2E
+ 	  (match_operand:<VHALF> 1 "register_operand" "w,r,r")
+ 	  (vec_duplicate:<VHALF> (const_int 0))))]
+   "TARGET_SIMD && !BYTES_BIG_ENDIAN"
+@@ -968,9 +968,25 @@
+    (set_attr "length" "4")]
+ )
+ 
++(define_insn "move_lo_quad_internal_<mode>"
++  [(set (match_operand:VQ_2E 0 "register_operand" "=w,w,w")
++	(vec_concat:VQ_2E
++	  (match_operand:<VHALF> 1 "register_operand" "w,r,r")
++	  (const_int 0)))]
++  "TARGET_SIMD && !BYTES_BIG_ENDIAN"
++  "@
++   dup\\t%d0, %1.d[0]
++   fmov\\t%d0, %1
++   dup\\t%d0, %1"
++  [(set_attr "type" "neon_dup<q>,f_mcr,neon_dup<q>")
++   (set_attr "simd" "yes,*,yes")
++   (set_attr "fp" "*,yes,*")
++   (set_attr "length" "4")]
++)
++
+ (define_insn "move_lo_quad_internal_be_<mode>"
+-  [(set (match_operand:VQ 0 "register_operand" "=w,w,w")
+-        (vec_concat:VQ
++  [(set (match_operand:VQ_NO2E 0 "register_operand" "=w,w,w")
++	(vec_concat:VQ_NO2E
+ 	  (vec_duplicate:<VHALF> (const_int 0))
+ 	  (match_operand:<VHALF> 1 "register_operand" "w,r,r")))]
+   "TARGET_SIMD && BYTES_BIG_ENDIAN"
+@@ -984,6 +1000,22 @@
+    (set_attr "length" "4")]
+ )
+ 
++(define_insn "move_lo_quad_internal_be_<mode>"
++  [(set (match_operand:VQ_2E 0 "register_operand" "=w,w,w")
++	(vec_concat:VQ_2E
++	  (const_int 0)
++	  (match_operand:<VHALF> 1 "register_operand" "w,r,r")))]
++  "TARGET_SIMD && BYTES_BIG_ENDIAN"
++  "@
++   dup\\t%d0, %1.d[0]
++   fmov\\t%d0, %1
++   dup\\t%d0, %1"
++  [(set_attr "type" "neon_dup<q>,f_mcr,neon_dup<q>")
++   (set_attr "simd" "yes,*,yes")
++   (set_attr "fp" "*,yes,*")
++   (set_attr "length" "4")]
++)
++
+ (define_expand "move_lo_quad_<mode>"
+   [(match_operand:VQ 0 "register_operand")
+    (match_operand:VQ 1 "register_operand")]
