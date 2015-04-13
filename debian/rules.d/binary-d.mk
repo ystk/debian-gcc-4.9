@@ -40,9 +40,10 @@ dirs_libphobos = \
 	$(gcc_lib_dir)
 
 files_libphobos = \
-	$(usr_lib$(2))/libgphobos2.a \
+	$(gcc_lib_dir)/libgphobos2.a \
 	$(gdc_include_dir)
 
+#	$(usr_lib$(2))/libgphobos2.a \
 
 $(binary_stamp)-gdc: $(install_stamp)
 	dh_testdir
@@ -106,6 +107,8 @@ $(binary_stamp)-libphobos: $(install_stamp)
 	rm -rf $(d_libphobos)
 	dh_installdirs -p$(p_libphobos) $(dirs_libphobos)
 
+	mv $(d)/$(usr_lib)/libgphobos2.a \
+		$(d)/$(gcc_lib_dir)/.
 	DH_COMPAT=2 dh_movefiles -p$(p_libphobos) $(files_libphobos)
 
 	# included in gdc package
@@ -138,6 +141,8 @@ define __do_libphobos_dev
 	rm -rf $(d_l)
 	dh_installdirs -p$(p_l) \
 		$(gcc_lib_dir$(2))
+	mv $(d)/$(usr_lib$(2))/libgphobos2.a \
+		$(d)/$(gcc_lib_dir$(2))/.
 	DH_COMPAT=2 dh_movefiles -p$(p_l) \
 		$(files_libphobos)
 

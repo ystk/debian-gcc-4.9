@@ -350,7 +350,7 @@ Index: b/src/libgnatvsn/Makefile.in
 +GCC:=../gcc/xgcc -B../gcc/
 +LIBGNAT_JUST_BUILT := -nostdinc -I../gcc/ada/rts
 +CFLAGS := -g -O2 -gnatn
-+BASEVER := $(shell cat @srcdir@/../gcc/BASE-VER)
++FULLVER := $(shell cat @srcdir@/../gcc/FULL-VER)
 +DEVPHASE := $(shell cat @srcdir@/../gcc/DEV-PHASE)
 +DATESTAMP := $(shell cat @srcdir@/../gcc/DATESTAMP)
 +
@@ -359,7 +359,7 @@ Index: b/src/libgnatvsn/Makefile.in
 +# development phase collapsed to the empty string in release mode
 +# (i.e. if DEVPHASE_c is empty).  The space immediately after the
 +# comma in the $(if ...) constructs is significant - do not remove it.
-+BASEVER_s   := "\"$(BASEVER)\""
++FULLVER_s   := "\"$(FULLVER)\""
 +DEVPHASE_s  := "\"$(if $(DEVPHASE), ($(DEVPHASE)))\""
 +DATESTAMP_s := "\"$(if $(DEVPHASE), $(DATESTAMP))\""
 +PKGVERSION_s:= "\"@PKGVERSION@\""
@@ -405,7 +405,7 @@ Index: b/src/libgnatvsn/Makefile.in
 +
 +obj-shared/version.o: version.c
 +	$(GCC) -c -fPIC -g -O2 \
-+	   -DBASEVER=$(BASEVER_s) \
++	   -DBASEVER=$(FULLVER_s) \
 +	   -DDATESTAMP=$(DATESTAMP_s) \
 +	   -DDEVPHASE=$(DEVPHASE_s) \
 +	   -DPKGVERSION=$(PKGVERSION_s) \
@@ -431,7 +431,7 @@ Index: b/src/libgnatvsn/Makefile.in
 +
 +obj-static/version.o: version.c
 +	$(GCC) -c -g -O2 \
-+	   -DBASEVER=$(BASEVER_s) \
++	   -DBASEVER=$(FULLVER_s) \
 +	   -DDATESTAMP=$(DATESTAMP_s) \
 +	   -DDEVPHASE=$(DEVPHASE_s) \
 +	   -DPKGVERSION=$(PKGVERSION_s) \

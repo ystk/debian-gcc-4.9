@@ -499,17 +499,20 @@ $(binary_stamp)-libstdcxx-doc: $(install_stamp) doxygen-docs
 	dh_installdocs -p$(p_libd)
 	rm -f $(d_libd)/$(docdir)/$(p_base)/copyright
 
-	cp -a $(srcdir)/libstdc++-v3/doc/html \
+	cp -a $(srcdir)/libstdc++-v3/doc/html/* \
 		$(d_libd)/$(docdir)/$(p_base)/libstdc++/.
 	cp -a $(doxygen_doc_dir)/doxygen/html \
-		$(d_libd)/$(docdir)/$(p_base)/libstdc++/.
+		$(d_libd)/$(docdir)/$(p_base)/libstdc++/user
 	find $(d_libd)/$(docdir)/$(p_base)/libstdc++ -name '*.md5' \
 		| xargs -r rm -f
 
-	rm -f $(d_libd)/$(docdir)/$(p_base)/libstdc++/html/jquery.js
-	dh_link -p$(p_libd) \
-		/usr/share/javascript/jquery/jquery.js \
-		/$(docdir)/$(p_base)/libstdc++/html/jquery.js
+# Broken docs ... see #766499
+#	rm -f $(d_libd)/$(docdir)/$(p_base)/libstdc++/*/jquery.js
+#	dh_link -p$(p_libd) \
+#		/usr/share/javascript/jquery/jquery.js \
+#		/$(docdir)/$(p_base)/libstdc++/html/jquery.js \
+#		/usr/share/javascript/jquery/jquery.js \
+#		/$(docdir)/$(p_base)/libstdc++/user/jquery.js
 
 	: FIXME: depending on the doxygen version
 	if [ -d $(doxygen_doc_dir)/doxygen/man/man3cxx ]; then \

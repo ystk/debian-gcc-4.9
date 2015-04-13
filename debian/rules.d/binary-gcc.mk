@@ -99,9 +99,11 @@ ifeq ($(with_qmath),yes)
 		$(d_gcc)/$(docdir)/$(p_xbase)/quadmath/changelog
 endif
 ifeq ($(with_asan),yes)
+  ifneq ($(empty_sanitizer_packages),yes)
 	mv $(d)/$(usr_lib)/libsanitizer*.spec $(d_gcc)/$(gcc_lib_dir)/
 	cp -p $(srcdir)/libsanitizer/ChangeLog \
 		$(d_gcc)/$(docdir)/$(p_xbase)/sanitizer/changelog
+  endif
 endif
 ifeq ($(with_cilkrts),yes)
 	mv $(d)/$(usr_lib)/libcilkrts.spec $(d_gcc)/$(gcc_lib_dir)/

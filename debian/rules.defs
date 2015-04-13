@@ -31,7 +31,23 @@ vafilt = $(subst $(2)=,,$(filter $(2)=%,$(1)))
 # for rules.sonames
 vafilt_defined = 1
 
+dpkg_target_vars := $(shell (dpkg-architecture | grep -q DEB_TARGET) && echo yes)
+ifeq ($(dpkg_target_vars),yes)
+  DEB_TARGET_ARCH=
+  DEB_TARGET_ARCH_BITS=
+  DEB_TARGET_ARCH_CPU=
+  DEB_TARGET_ARCH_ENDIAN=
+  DEB_TARGET_ARCH_OS=
+  DEB_TARGET_GNU_CPU=
+  DEB_TARGET_GNU_SYSTEM=
+  DEB_TARGET_GNU_TYPE=
+  DEB_TARGET_MULTIARCH=
+endif
+
 DPKG_VARS		:= $(shell dpkg-architecture)
+ifeq ($(dpkg_target_vars),yes)
+  DPKG_VARS		:= $(filter-out DEB_TARGET_%, $(DPKG_VARS))
+endif
 DEB_BUILD_ARCH		?= $(call vafilt,$(DPKG_VARS),DEB_BUILD_ARCH)
 DEB_BUILD_GNU_TYPE	?= $(call vafilt,$(DPKG_VARS),DEB_BUILD_GNU_TYPE)
 DEB_BUILD_MULTIARCH	?= $(call vafilt,$(DPKG_VARS),DEB_BUILD_MULTIARCH)
@@ -108,14 +124,17 @@ else
   endif
   TARGET_VARS := $(shell dpkg-architecture -f -a$(DEB_TARGET_ARCH) 2>/dev/null)
 endif
+ifeq ($(dpkg_target_vars),yes)
+  TARGET_VARS		:= $(filter-out DEB_TARGET_%, $(TARGET_VARS))
+endif
 
-DEB_TARGET_ARCH		?= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH)
-DEB_TARGET_ARCH_OS	?= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_OS)
-DEB_TARGET_ARCH_CPU	?= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_CPU)
-DEB_TARGET_GNU_CPU	?= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_CPU)
-DEB_TARGET_GNU_TYPE	?= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
-DEB_TARGET_GNU_SYSTEM	?= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
-DEB_TARGET_MULTIARCH	?= $(call vafilt,$(TARGET_VARS),DEB_HOST_MULTIARCH)
+DEB_TARGET_ARCH		:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH)
+DEB_TARGET_ARCH_OS	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_OS)
+DEB_TARGET_ARCH_CPU	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_CPU)
+DEB_TARGET_GNU_CPU	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_CPU)
+DEB_TARGET_GNU_TYPE	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
+DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
+DEB_TARGET_MULTIARCH	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_MULTIARCH)
 
 ifeq ($(DEB_TARGET_GNU_TYPE),i486-linux-gnu)
   DEB_TARGET_GNU_TYPE	= i586-linux-gnu
@@ -124,6 +143,9 @@ endif
 ifeq ($(DEB_TARGET_ARCH),)
   $(error Invalid architecure.)
 endif
+
+# Force this, people get confused about the default. See #760770.
+override with_deps_on_target_arch_pkgs :=
 
 # including unversiond symlinks for binaries
 #with_unversioned = yes
@@ -154,9 +176,6 @@ else
   ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
     # cross compiler, sets WITH_SYSROOT on it's own
     DEB_CROSS = yes
-    ifeq ($(with_deps_on_target_arch_pkgs),yes)
-      with_sysroot = /
-    endif
   else
     # native build
     # first ones are wheezy and maverick
@@ -187,13 +206,6 @@ ifeq ($(DEB_CROSS),yes)
   cross_bin_arch := -$(subst _,-,$(DEB_TARGET_ALIAS))
   cross_lib_arch := -$(subst _,-,$(DEB_TARGET_ARCH))-cross
   cmd_prefix := $(DEB_TARGET_GNU_TYPE)-
-
-  ifeq ($(with_deps_on_target_arch_pkgs),yes)
-    LS :=
-    LS_biarch :=
-    cross_lib_arch :=
-    AQ := :$(TARGET)
-  endif
 
   TARGET_ALIAS := $(DEB_TARGET_ALIAS)
 
@@ -333,7 +345,7 @@ endif
 # build using fsf or linaro
 ifeq ($(distribution),Ubuntu)
   ifeq (,$(findstring gnat, $(PKGSOURCE)))
-  ifneq (,$(findstring $(DEB_TARGET_ARCH),arm64))
+  ifneq (,$(findstring $(DEB_TARGET_ARCH),arm64 armel armhf))
     with_linaro_branch = yes
   endif
   endif
@@ -341,11 +353,6 @@ endif
 ifeq ($(distribution)-$(DEB_TARGET_ARCH),Debian-arm64)
   with_linaro_branch = yes
 endif
-
-ifneq (,$(filter $(DEB_TARGET_ARCH),ppc64el))
-  with_ibm_branch = yes
-endif
-with_ibm_branch =
 
 # check if we're building for armel or armhf
 ifeq ($(DEB_TARGET_ARCH),armhf)
@@ -379,11 +386,7 @@ endif
 
 ifeq ($(with_multiarch_lib),yes)
   ifneq ($(single_package),yes)
-    ifeq ($(DEB_CROSS),yes)
-      ifeq ($(with_deps_on_target_arch_pkgs),yes)
-        with_multiarch_cxxheaders := yes
-      endif
-    else
+    ifneq ($(DEB_CROSS),yes)
       with_multiarch_cxxheaders := yes
     endif
   endif
@@ -454,11 +457,7 @@ ifneq ($(DEB_STAGE),stage1)
   ifneq ($(DEB_CROSS),yes)
     with_gccbase := yes
   else
-    ifneq ($(with_deps_on_target_arch_pkgs),yes)
-      with_gccxbase := yes
-    else
-      with_gccbase := yes
-    endif
+    with_gccxbase := yes
   endif
 endif
 
@@ -1004,9 +1003,6 @@ endif
 with_asan :=
 with_asan := $(call envfilt, asan, , , $(with_asan))
 asan_archs = amd64 armel armhf i386 powerpc ppc64 x32 sparc sparc64
-ifeq ($(trunk_build),yes)
-  asan_archs := $(filter-out sparc sparc64, $(asan_archs))
-endif
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(asan_archs)))
   with_asan := yes
 endif
@@ -1035,6 +1031,13 @@ with_ubsan := $(call envfilt, ubsan, , , $(with_ubsan))
 ubsan_archs = amd64 armel armhf i386 powerpc ppc64 x32 sparc sparc64
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(ubsan_archs)))
   with_ubsan := yes
+endif
+
+# not yet completely ported, and causing kernel crashes running the tests
+ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc ppc64 ppc64el))
+  ifneq (,$(filter $(distrelease),squeeze wheezy jessie sid precise trusty utopic vivid))
+    empty_sanitizer_packages := yes
+  endif
 endif
 
 # libvtv --------------------
@@ -1409,9 +1412,10 @@ define gen_biarch
     ifeq ($(with_go),yes)
       biarch_multidir_names += libgo
     endif
-    ifeq ($(with_d),yes)
-      biarch_multidir_names += libphobos
-    endif
+    # no gdc-4-x-multilib built
+    #ifeq ($(with_d),yes)
+    #  biarch_multidir_names += libphobos
+    #endif
     export biarch_multidir_names
     ifneq (,$$(findstring 32,$1))
       TARGET64_MACHINE := $$(strip $$(subst $$(DEB_TARGET_GNU_CPU),$$(biarch_cpu), \
@@ -1452,9 +1456,7 @@ $(foreach x,32 64 n32 x32 hf sf,$(eval $(call gen_biarch,$(x))))
 #ifeq ($(trunk_build),yes)
 #  no_biarch_libs := yes
 #endif
-ifdef DEB_CROSS_NO_BIARCH
-  no_biarch_libs := yes
-endif
+no_biarch_libs :=
 
 ifeq ($(no_biarch_libs),yes)
   with_lib64gcc		:= no
@@ -1603,15 +1605,6 @@ ifeq ($(no_biarch_libs),yes)
 
   with_java_plugin := no
 
-  ifdef DEB_CROSS_NO_BIARCH
-    biarch64   	:= disabled by DEB_CROSS_NO_BIARCH
-    biarch32 	:= disabled by DEB_CROSS_NO_BIARCH
-    biarchn32 	:= disabled by DEB_CROSS_NO_BIARCH
-    biarchx32	:= disabled by DEB_CROSS_NO_BIARCH
-    biarchhf 	:= disabled by DEB_CROSS_NO_BIARCH
-    biarchsf 	:= disabled by DEB_CROSS_NO_BIARCH
-  endif
-
   ifeq ($(with_ada)-$(with_separate_gnat),yes-yes)
     biarchhf	:= disabled for Ada
     biarchsf	:= disabled for Ada
@@ -1747,21 +1740,16 @@ stamp-dir:
 	mkdir -p $(stampdir)
 
 ifeq ($(DEB_CROSS),yes)
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    define cross_mangle_shlibs
-	sed -i s/$(cross_lib_arch)//g debian/$(1)/DEBIAN/shlibs
-    endef
-    define cross_mangle_substvars
+  define cross_mangle_shlibs
+	if [ -f debian/$(1)/DEBIAN/shlibs ]; then \
+	  sed -i s/$(cross_lib_arch)//g debian/$(1)/DEBIAN/shlibs; \
+	fi
+  endef
+  define cross_mangle_substvars
 	if [ -f debian/$(1).substvars ]; then \
 	  sed -i 's/lib[^ ,(]*/&$(cross_lib_arch)/g' debian/$(1).substvars; \
 	fi
-    endef
-  else
-    define cross_mangle_shlibs
-    endef
-    define cross_mangle_substvars
-    endef
-  endif
+  endef
 else
   define cross_mangle_shlibs
   endef
@@ -1792,15 +1780,10 @@ shlibdirs_to_search = -l$(subst $(SPACE),:,$(foreach d,$(_shlibdirs),$(d)))
 # native ... 
 
 ifneq (,$(filter $(DEB_TARGET_ARCH), mips mipsel mips64 mips64el mipsn32 mipsn32el))
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    define cross_mangle_control
-	$(if $(findstring lib64,$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/[a-z0-9-]+32[^$(COMMA)]+($(COMMA) *|$$)//g;/^(Dep|Rec|Sug)/s/$(p_lgcc)/$(p_l64gcc)/;/^(Dep|Rec|Sug)/s/ *$(COMMA) *$$//' debian/$(1)/DEBIAN/control,@:)
-	$(if $(findstring libn32,$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/[a-z0-9-]+64[^$(COMMA)]+($(COMMA) *|$$)//g;/^(Dep|Rec|Sug)/s/$(p_lgcc)/$(p_ln32gcc)/;/^(Dep|Rec|Sug)/s/ *$(COMMA) *$$//' debian/$(1)/DEBIAN/control,@:)
-    endef
-  else
-    define cross_mangle_control
-    endef
-  endif
+  define cross_mangle_control
+	$(if $(findstring lib64,$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/libn?32[^$(COMMA)]+($(COMMA) *|$$)//g;/^(Dep|Rec|Sug)/s/$(p_lgcc)/$(p_l64gcc)/;/^(Dep|Rec|Sug)/s/ *$(COMMA) *$$//' debian/$(1)/DEBIAN/control,@:)
+	$(if $(findstring libn32,$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/lib64[^$(COMMA)]+($(COMMA) *|$$)//g;/^(Dep|Rec|Sug)/s/$(p_lgcc)/$(p_ln32gcc)/;/^(Dep|Rec|Sug)/s/ *$(COMMA) *$$//' debian/$(1)/DEBIAN/control,@:)
+  endef
 else
   define cross_mangle_control
   endef

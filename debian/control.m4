@@ -22,7 +22,7 @@ define(`depifenabled', `ifelse(index(enabled_languages, `$1'), -1, `', `$2')')
 define(`ifenabled', `ifelse(index(enabled_languages, `$1'), -1, `dnl', `$2')')
 
 ifdef(`TARGET',`ifdef(`CROSS_ARCH',`',`undefine(`MULTIARCH')')')
-define(`CROSS_ARCH', ifdef(`CROSS_ARCH', CROSS_ARCH, `all'))
+define(`CROSS_ARCH',`all')
 define(`libdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`>=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 define(`libdevdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 define(`libdbgdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`>=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
@@ -52,7 +52,7 @@ Uploaders: Iain Buclaw <ibuclaw@ubuntu.com>, Matthias Klose <doko@debian.org>
 ', `dnl
 Uploaders: Matthias Klose <doko@debian.org>
 ')dnl SRCNAME
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 ifdef(`TARGET',`dnl cross
 Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP
@@ -64,7 +64,8 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   zlib1g-dev, SDT_BUILD_DEP
   bison (>= 1:2.3), flex, realpath (>= 1.9.12), lsb-release, quilt
 ',`dnl native
-Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP GCC_MULTILIB_BUILD_DEP
+Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
+  GCC_MULTILIB_BUILD_DEP
   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP LIBC_DBG_DEP
   kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any],
   AUTO_BUILD_DEP BASE_BUILD_DEP
@@ -140,7 +141,7 @@ Section: libs
 Priority: PRI(required)
 Depends: ${misc:Depends}
 Replaces: ${base:Replaces}
-Breaks: gcc-4.4-base (<< 4.4.7), gcj-4.4-base (<< 4.4.6-9~), gnat-4.4-base (<< 4.4.6-3~), gcj-4.6-base (<< 4.6.1-4~), gnat-4.6 (<< 4.6.1-5~), dehydra (<= 0.9.hg20110609-2)
+Breaks: gcc-4.4-base (<< 4.4.7), gcc-4.7-base (<< 4.7.3), gcj-4.4-base (<< 4.4.6-9~), gnat-4.4-base (<< 4.4.6-3~), gcj-4.6-base (<< 4.6.1-4~), gnat-4.6 (<< 4.6.1-5~), dehydra (<= 0.9.hg20110609-2)
 BUILT_USING`'dnl
 Description: GCC, the GNU Compiler Collection (base package)
  This package contains files common to all languages and libraries
@@ -753,9 +754,11 @@ Suggests: ${gcc:multilib}, gcc`'PV-doc (>= ${gcc:SoftVersion}),
  libdbgdep(lsan`'LSAN_SO-dbg,),
  libdbgdep(tsan`'TSAN_SO-dbg,),
  libdbgdep(ubsan`'UBSAN_SO-dbg,),
+ifenabled(`libvtv',`',`
  libdbgdep(vtv`'VTV_SO-dbg,),
+')`'dnl
  libdbgdep(cilkrts`'CILKRTS_SO-dbg,),
- libdbgdep(quadmath`'QMATH_SO-dbg,), ${dep:libcloog}, ${dep:gold}
+ libdbgdep(quadmath`'QMATH_SO-dbg,), ${dep:libcloog}
 Provides: c-compiler`'TS
 ifdef(`TARGET',`Conflicts: gcc-multilib
 ')`'dnl
@@ -4507,7 +4510,7 @@ Package: libstdc++`'PV-doc
 Architecture: all
 Section: doc
 Priority: PRI(optional)
-Depends: gcc`'PV-base (>= ${gcc:SoftVersion}), ${misc:Depends}, libjs-jquery
+Depends: gcc`'PV-base (>= ${gcc:SoftVersion}), ${misc:Depends}
 Conflicts: libstdc++5-doc, libstdc++5-3.3-doc, libstdc++6-doc,
  libstdc++6-4.0-doc, libstdc++6-4.1-doc, libstdc++6-4.2-doc, libstdc++6-4.3-doc,
  libstdc++6-4.4-doc, libstdc++6-4.5-doc, libstdc++6-4.6-doc, libstdc++6-4.7-doc,
@@ -4785,7 +4788,6 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`libphobos_archs')
 Section: libdevel
 Priority: PRI(optional)
 Depends: BASEDEP, zlib1g-dev, ${shlibs:Depends}, ${misc:Depends}
-Provides: libphobos-dev
 BUILT_USING`'dnl
 Description: Phobos D standard library
  This is the Phobos standard library that comes with the D2 compiler.
@@ -4808,15 +4810,15 @@ Description: Phobos D standard library
 
 ifdef(`TARGET',`',`dnl
 ifenabled(`libs',`
-Package: gcc`'PV-soft-float
-Architecture: arm armel armhf
-Priority: PRI(optional)
-Depends: BASEDEP, depifenabled(`cdev',`gcc`'PV (= ${gcc:Version}),') ${shlibs:Depends}, ${misc:Depends}
-Conflicts: gcc-4.4-soft-float, gcc-4.5-soft-float, gcc-4.6-soft-float
-BUILT_USING`'dnl
-Description: GCC soft-floating-point gcc libraries (ARM)
- These are versions of basic static libraries such as libgcc.a compiled
- with the -msoft-float option, for CPUs without a floating-point unit.
+#Package: gcc`'PV-soft-float
+#Architecture: arm armel armhf
+#Priority: PRI(optional)
+#Depends: BASEDEP, depifenabled(`cdev',`gcc`'PV (= ${gcc:Version}),') ${shlibs:Depends}, ${misc:Depends}
+#Conflicts: gcc-4.4-soft-float, gcc-4.5-soft-float, gcc-4.6-soft-float
+#BUILT_USING`'dnl
+#Description: GCC soft-floating-point gcc libraries (ARM)
+# These are versions of basic static libraries such as libgcc.a compiled
+# with the -msoft-float option, for CPUs without a floating-point unit.
 ')`'dnl commonlibs
 ')`'dnl
 

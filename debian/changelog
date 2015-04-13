@@ -1,3 +1,262 @@
+gcc-4.9 (4.9.2-10) unstable; urgency=medium
+
+  * Really add x32 multilib packages for i386 cross builds to the control file.
+    Closes: #773265.
+  * Use the final binutils 2.25 release.
+  * Tighten the gcc-4.9 dependency on libgcc-4.9-dev (YunQiang Su).
+
+ -- Matthias Klose <doko@debian.org>  Thu, 25 Dec 2014 18:10:51 +0100
+
+gcc-4.9 (4.9.2-9) unstable; urgency=medium
+
+  * Update to SVN 20141220 (r218987) from the gcc-4_9-branch.
+    - Fix PR libstdc++/64302, PR libstdc++/64303, PR c++/60955,
+      PR rtl-optimization/64010 (wrong code), PR sanitizer/64265 (wrong code).
+  * Add x32 multilib packages for i386 cross builds to the control file.
+    Closes: #773265.
+  * Fix mips64el multilib cross builds. Closes: #772665.
+  * libphobos-4.x-dev: Stop providing libphobos-dev, now a real package.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 20 Dec 2014 07:47:15 +0100
+
+gcc-4.9 (4.9.2-8) unstable; urgency=medium
+
+  * Update to SVN 20141214 (r218721) from the gcc-4_9-branch.
+    - Fix PR tree-optimization/62021 (ice), PR middle-end/64225 (missed
+      optimization), PR libstdc++/64239, PR rtl-optimization/64037 (wrong
+      code), PR target/64200 (x86, ice), PR tree-optimization/64269 (ice).
+  * Don't build libphobos multilibs, there is no gdc-multilib build.
+  * Really disable the sanitizer libs on powerpc, ppc64 and ppc64el.
+  * Paste config.log files to stdout in case of build errors.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 14 Dec 2014 18:43:49 +0100
+
+gcc-4.9 (4.9.2-7) unstable; urgency=medium
+
+  * Update to SVN 20141210 (r218575) from the gcc-4_9-branch.
+    - Fix PR libstdc++/64203, PR target/55351 (SH), PR tree-optimization/61686,
+      PR bootstrap/64213.
+    - libgcc hppa backports.
+  * Fix cross builds with dpkg-architecture unconditionally exporting
+    target variables. For now specify the target architecture
+    in debian/target. This still needs to work with older dpkg versions,
+    so don't "simplify" the packaging. Closes: #768167.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 10 Dec 2014 13:32:42 +0100
+
+gcc-4.9 (4.9.2-6) unstable; urgency=medium
+
+  * Update to SVN 20141209 (r218510) from the gcc-4_9-branch.
+    - Fix PR libstdc++/63840, PR libstdc++/61947, PR libstdc++/64140,
+      PR target/50751 (SH), PR target/64108 (x86, ice),
+      PR rtl-optimization/64037 (wrong-code), PR c++/56493 (performance),
+      PR c/59708, PR ipa/64153, PR target/64167) (wrong code,
+      closes: #771974), PR target/59593 (ARM, wrong code),
+      PR middle-end/63762 (ARM. wrong code), PR target/63661 (x86,
+      wrong code), PR target/64113 (alpha, wrong code), PR c++/64191. 
+    - Allow to build with ISL 0.14.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 09 Dec 2014 11:00:08 +0100
+
+gcc-4.9 (4.9.2-5) unstable; urgency=medium
+
+  * Update to SVN 20141202 (r218271) from the gcc-4_9-branch.
+    - Fix PR middle-end/64111 (ice), PR ipa/63551 (wrong code).
+      PR libstdc++/64102 (closes: #770843), PR target/64115 (powerpc).
+  * Move libphobos2.a into the gcc_lib_dir. Closes: #771647.
+  * Fix typo in last powerpcspe patch. Closes: #771654.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 02 Dec 2014 17:42:07 +0100
+
+gcc-4.9 (4.9.2-4) unstable; urgency=medium
+
+  * Update to SVN 20141128 (r218142) from the gcc-4_9-branch.
+    -PR PR target/56846 (ARM), PR libstdc++/63497,
+     PR middle-end/63738 (wrong code), PR tree-optimization/62238 (ice),
+     PR tree-optimization/61927 (wrong code),
+     PR tree-optimization/63605 (wrong code), PR middle-end/63665 (wrong code),
+     PR fortran/63938 (OpenMP), PR middle-end/64067 (ice),
+     PR tree-optimization/63915 (wrong code), PR sanitizer/63913 (ice valid),
+     PR rtl-optimization/63659 (wrong code).
+  * Don't let stage1 multilib builds depend on the multilib libc-dev.
+    Closes: #771243.
+  * Fix an exception problem on powerpcspe (Roland Stigge). Closes: #771324.
+  * Remove unsupported with_deps_on_target_arch_pkgs configurations.
+    Closes: #760770, #766924, #770413.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 28 Nov 2014 15:26:23 +0100
+
+gcc-4.9 (4.9.2-3) unstable; urgency=medium
+
+  * Update to SVN 20141125 (r218048) from the gcc-4_9-branch.
+    - PR target/53976 (SH), PR target/63783 (SH), PR target/51244 (SH),
+      PR target/60111 (SH), PR target/63673 (ppc),
+      PR tree-optimization/61750 (ice), PR target/63947 (x86, wrong code),
+      PR tree-optimization/62167 (wrong code), PR c++/63849 (ice),
+      PR ada/47500.
+
+  [ Aurelien Jarno ]
+  * Always configure sh4-linux with --with-multilib-list=m4,m4-nofpu,
+    even with multilib disabled, as it doesn't produce additional
+    libraries.
+
+  [ Matthias Klose ]
+  * gcc-4.9-base: Add Breaks: gcc-4.7-base (<< 4.7.3). Closes: #770025.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 25 Nov 2014 17:04:19 +0100
+
+gcc-4.9 (4.9.2-2) unstable; urgency=medium
+
+  * Update to SVN 20141117 (r217768) from the gcc-4_9-branch.
+    - Fix PR rtl-optimization/63475, PR rtl-optimization/63483 (gfortran
+      aliasing fixes for alpha), PR target/63538 (x86), PR ipa/63838 (wrong
+      code), PR target/61535 (sparc), PR c++/63265 (diagnostic), PR ada/42978.
+  * Fix PR c/61553 (ice on illegal code), backported from the trunk.
+    Closes: #767668.
+  * Disable building the sanitizer libs on powerpc and ppc64. Not yet
+    completely ported, and causing kernel crashes running the tests.
+  * Update the Linaro support to the 4.9-2014.11 release.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 18 Nov 2014 00:34:01 +0100
+
+gcc-4.9 (4.9.2-1) unstable; urgency=medium
+
+  * GCC 4.9.2 release.
+  * Update GDC from the 4.9 branch.
+
+  [ Matthias Klose ]
+  * Allow to build the gcc-base package only.
+
+  [Ludovic Brenta]
+  Merge from gnat-4.9 (4.9.1-4) unstable; urgency=low.
+  * debian/patches/ada-libgnatvsn.diff: compile the version.o of
+    libgnatvsn.{a,so} with -DBASEVER=$(FULLVER) to align it with the
+    change made in gcc-base-version.diff, which is compiled into gcc and
+    gnat1.  Fixes: #759038.
+  * debian/patches/ada-revert-pr63225.diff: new; preserve the aliversion
+    compatibility of libgnatvsn4.9-dev with -3.
+
+  Merge from gnat-4.9 (4.9.1-3) unstable; urgency=low
+  Merge from gnat-4.9 (4.9.1-2) unstable; urgency=low
+
+  [Svante Signell]
+  * debian/patches/ada-hurd.diff: update and bring up to par with
+    ada-kfreebsd.diff.
+
+  [Ludovic Brenta]
+  * Rebuild with newer dpkg.  Fixes: #761248.
+
+  Merge from gnat-4.9 (4.9.1-1) unstable; urgency=low
+
+  * New upstream release.  Build-depend on gcc-4.9-source (>= 4.9.1).
+    Fixes: #755490.
+  * debian/rules.d/binary-ada.mk: install the test-summary file in package
+    gnat-4.9 instead of gnat-4.9-base.  test-summary is actually
+    architecture-dependent.  This change reflects what happens in gcc-4.9
+    and gcc-4.9-base as well.  Fixes: #749869.
+
+  Merge from gnat-4.9 (4.9.0-2) unstable; urgency=low
+
+  * Lintian warnings:
+  * debian/control.m4 (gnat-4.9-base): Multi-Arch: same.
+  * debian/patches/ada-749574.diff: new.  Fixes: #749574.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 04 Nov 2014 02:58:33 +0100
+
+gcc-4.9 (4.9.1-19) unstable; urgency=medium
+
+  * GCC 4.9.2 release candidate.
+  * Update to SVN 20141023 (r216594) from the gcc-4_9-branch.
+  * Install sanitizer header files.
+  * Apply patch for PR 60655, taken from the trunk.
+  * Fix typo in the libstdc++ HTML docs. Closes: #766498.
+  * Use doxygen's copy of jquery.js for the libstdc++ docs. Closes: #766499.
+  * Force self-contained cross builds.
+  * Don't build functionally non-equivalent cross compilers.
+  * Update the Linaro support to the 4.9-2014.10-1 release.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 24 Oct 2014 14:20:00 +0200
+
+gcc-4.9 (4.9.1-18) unstable; urgency=medium
+
+  * Update to SVN 20141018 (r216426) from the gcc-4_9-branch.
+
+  [ Matthias Klose ]
+  * Update libstdc++ symbols file for powerpcspe (Roland Stigge).
+    Closes: #765078.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 18 Oct 2014 16:28:09 +0200
+
+gcc-4.9 (4.9.1-17) unstable; urgency=medium
+
+  * Update to SVN 20141015 (r216240) from the gcc-4_9-branch.
+    - Fix PR c++/63405 (ice) Closes: #761549.
+    - Fix PR ipa/61144 (wrong code). Closes: #748681.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 15 Oct 2014 10:29:23 +0200
+
+gcc-4.9 (4.9.1-16) unstable; urgency=medium
+
+  * Update to SVN 20140930 (r215717) from the gcc-4_9-branch.
+  * Don't suggest libvtv and binutils-gold. Closes: #761612.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 30 Sep 2014 11:37:48 +0200
+
+gcc-4.9 (4.9.1-15) unstable; urgency=medium
+
+  * Update to SVN 20140919 (r215401) from the gcc-4_9-branch.
+
+  [ Matthias Klose ]
+  * Extend the fix for PR target/63190 (AArch64). Closes: #758964.
+  * Apply proposed fix for Linaro #331, LP: #1353729 (AArch64).
+
+  [ Aurelien Jarno ]
+  * Default to mips64 ISA on mips64el, with tuning for mips64r2.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 19 Sep 2014 20:17:27 +0200
+
+gcc-4.9 (4.9.1-14) unstable; urgency=medium
+
+  * Update to SVN 20140912 (r215228) from the gcc-4_9-branch.
+  * Update the Linaro support to the 4.9-2014.09 release.
+  * Fix installation of the libstdc++ documentation. Closes: #760872.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 12 Sep 2014 19:15:23 +0200
+
+gcc-4.9 (4.9.1-13) unstable; urgency=medium
+
+  * Update to SVN 20140908 (r215008) from the gcc-4_9-branch.
+  * Enable cgo on AArch64 (Michael Hudson). LP: #1361940.
+  * Update the Linaro support from the Linaro/4.9 branch.
+  * Fix PR target/63190 (AArch64), taken from the trunk. Closes: #758964.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 08 Sep 2014 09:56:50 +0200
+
+gcc-4.9 (4.9.1-12) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * boehm-gc: use anonymous mmap instead of brk also on hurd-*.
+    Closes: #753791.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 31 Aug 2014 18:40:46 +0200
+
+gcc-4.9 (4.9.1-11) unstable; urgency=medium
+
+  * Update to SVN 20140830 (r214759) from the gcc-4_9-branch.
+  * Update cross installation patches for the branch.
+  * Use the base version (4.9) when accessing files in gcc_lib_dir.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 30 Aug 2014 22:05:47 +0200
+
+gcc-4.9 (4.9.1-10) unstable; urgency=medium
+
+  * Update to SVN 20140830 (r214751) from the gcc-4_9-branch.
+  * Fix jni symlinks in /usr/lib/jvm. Closes: #759558.
+  * Update the Linaro support from the Linaro/4.9 branch.
+    - Fixes Aarch64 cross build on i386.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 30 Aug 2014 04:47:19 +0200
+
 gcc-4.9 (4.9.1-9) unstable; urgency=medium
 
   * Update to SVN 20140824 (r214405) from the gcc-4_9-branch.

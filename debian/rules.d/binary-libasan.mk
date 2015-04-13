@@ -25,7 +25,8 @@ define __do_asan
 
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libasan.so.*
+	$(if $(empty_sanitizer_packages),, \
+	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libasan.so.* )
 
 	debian/dh_doclink -p$(p_l) $(p_base)
 	debian/dh_doclink -p$(p_d) $(p_base)

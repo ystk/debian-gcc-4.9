@@ -45,7 +45,7 @@ GNAT_TOOLS = gnat gnatbind gnatchop gnatclean gnatfind gnatkr gnatlink \
              gnatls gnatmake gnatname gnatprep gnatxref gnathtml
 
 dirs_gnat = \
-	$(docdir)/$(p_xbase) \
+	$(docdir)/$(p_gbase) \
 	$(PF)/bin \
 	$(PF)/share/man/man1 \
 	$(gcc_lib_dir) \
@@ -68,11 +68,7 @@ $(binary_stamp)-gnatbase: $(install_stamp)
 	dh_testdir
 	dh_testroot
 	dh_installdocs -p$(p_gbase) debian/README.gnat debian/README.maintainers
-ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
-  ifeq ($(with_check),yes)
-	dh_installdocs -p$(p_gbase) test-summary
-  endif
-endif
+	: # $(p_gbase)
 ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
 	mkdir -p $(d_gbase)/$(docdir)/$(p_xbase)
 	ln -sf ../$(p_gbase) $(d_gbase)/$(docdir)/$(p_xbase)/Ada
@@ -258,10 +254,11 @@ $(binary_stamp)-ada: $(binary_stamp)-libgnatprj
 else
 $(binary_stamp)-ada: $(install_stamp)
 endif
+$(binary_stamp)-ada: $(binary_stamp)-gnatbase
 	dh_testdir
 	dh_testroot
 	mv $(install_stamp) $(install_stamp)-tmp
-	: # gnat
+	: # $(p_gnat)
 	rm -rf $(d_gnat)
 	dh_installdirs -p$(p_gnat) $(dirs_gnat)
 	# Upstream does not install gnathtml.
@@ -294,6 +291,11 @@ ifeq ($(with_libgnat),yes)
 endif
 	debian/dh_doclink -p$(p_gnat)      $(p_gbase)
 	debian/dh_doclink -p$(p_gnsjlj) $(p_gbase)
+ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
+  ifeq ($(with_check),yes)
+	cp -p test-summary $(d_gnat)/$(docdir)/$(p_gbase)/.
+  endif
+endif
 	for i in $(GNAT_TOOLS); do \
 	  case "$$i" in \
 	    gnat) cp -p debian/gnat.1 $(d_gnat)/$(PF)/share/man/man1/$(cmd_prefix)gnat.1 ;; \

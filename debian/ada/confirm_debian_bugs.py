@@ -142,44 +142,6 @@ end pak5;
 """)))
 
 check_reports_an_error_but_should_not (
-    bug = 246183,
-    make = ("gnatmake", "test_39"),
-    regex = "test_39\.ads:4:04: instantiation error at pak1-pak2\.ads:6",
-    sources = (
-        ("pak1.ads", """package pak1 is
-   type T1 is tagged private;
-private
-   type T1 is tagged record
-      i1: integer;
-   end record;
-end pak1;
-"""),
-        ("pak1-pak2.ads", """generic
-   type T2 is new T1 with private;
-package pak1.pak2 is
-private
-   x1 : T2;
-   i2: integer := x1.i1;
-end pak1.pak2;
-"""),
-        ("test_39.ads", """with pak1.pak2;
-package Test_39 is
-   type T3 is new pak1.T1 with null record;
-   package new_pak2 is new pak1.pak2(T3);
-end Test_39;
-""")))
-
-check_reports_an_error_but_should_not (
-    bug = 246186,
-    make = ("gnatmake", "test_42"),
-    regex = 'test_42.ads:2:33: missing "\.\."',
-    sources = (
-        ("test_42.ads", """package Test_42 is
-   type a3 is array(boolean'base) of integer;
-end Test_42;
-"""),))
-
-check_reports_an_error_but_should_not (
     bug = 246187,
     make = ("gnatmake", "test_43"),
     regex = "Error detected at system.ads:152:5",
@@ -271,7 +233,7 @@ end Test_61;
 check_reports_an_error_but_should_not (
     bug = 247564,
     make = ("gnatmake", "test_70"),
-    regex = "in gnat_to_gnu_entity, at ada/gcc-interface/decl\.c:582",
+    regex = "in gnat_to_gnu_entity, at ada/gcc-interface/decl\.c:568",
     sources = (
         ("test_70.adb", """procedure Test_70 is
 
@@ -548,7 +510,7 @@ end;
 check_reports_an_error_but_should_not (
     bug = 251265,
     make = ("gnatmake", "test_106"),
-    regex = "in Case_Statement_to_gnu, at ada/gcc-interface/trans.c:2198",
+    regex = "in Case_Statement_to_gnu, at ada/gcc-interface/trans.c:2366",
     sources = (
         ("test_106.adb", """pragma Ada_83;
 procedure Test_106(x: integer) is
@@ -879,21 +841,6 @@ end test_133;
 """)))
 
 check_compiles_but_should_not (
-    bug = 416975,
-    make = ("gnatmake", "pak1"),
-    sources = (
-        ("pak1.ads", """package pak1 is
-   -- RM 7.3(13), 4.9.1(1)
-   -- check that discriminants statically match
-   type T1(d1: integer) is tagged null record;
-   type T2 is new T1 (3) with private;
-private
-   subtype T3 is T1 (4);
-   type T2 is new T3 with null record;  -- Error: 3 vs 4
-end pak1;
-"""),))
-
-check_compiles_but_should_not (
     bug = 416979,
     make = ("gnatmake", "pak1"),
     sources = (
@@ -917,7 +864,7 @@ check_reports_an_error_but_should_not (
     bug = 427108,
     make = ("gnatmake", "test1"),
 #     regex = "FAILED",
-    regex = "Program_Error exp_disp.adb:8445 explicit raise",
+    regex = "Program_Error exp_disp.adb:8462 explicit raise",
     sources = (
         ("test1.adb", """-- "For the execution of a call on an inherited subprogram,
 -- a call on the corresponding primitive subprogram of the

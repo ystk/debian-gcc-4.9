@@ -15,7 +15,8 @@ series_file	?= $(patchdir)/series
 debian_patches = \
 	svn-updates \
 	$(if $(with_linaro_branch),gcc-linaro) \
-	$(if $(with_linaro_branch),gcc-linaro-updates) \
+	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
+	$(if $(with_linaro_branch),linaro331) \
 
 #	svn-updates \
 
@@ -26,7 +27,6 @@ endif
 
 ifneq ($(GFDL_INVARIANT_FREE),yes)
   debian_patches += \
-	svn-doc-updates \
 	$(if $(with_linaro_branch),gcc-linaro-doc) \
 	rename-info-files \
 
@@ -75,9 +75,9 @@ debian_patches += \
 	gcc-auto-build \
 	kfreebsd-unwind \
 	kfreebsd-boehm-gc \
+	hurd-boehm-gc \
 	libffi-m68k \
 	libitm-no-fortify-source \
-	pr59758 \
 	pr57653 \
 	pr61257 \
 	pr61046 \
@@ -89,7 +89,12 @@ debian_patches += \
 	pr61294 \
 	$(if $(filter yes, $(GFDL_INVARIANT_FREE)),,pr61294-doc) \
 	pr59586 \
-	pr62040 \
+	pr60655-debug-loc \
+	pr63751
+
+# gccgo cgo patches
+debian_patches += \
+	gccgo-arm64 \
 
 # FIXME: only needed for isl-0.13 for now
 #	isl-0.13-compat \
@@ -128,6 +133,7 @@ endif
 debian_patches += ada-arm
 debian_patches += ada-hurd
 debian_patches += ada-kfreebsd
+debian_patches += ada-revert-pr63225
 
 ifeq ($(with_ada),yes)
   debian_patches += \
@@ -209,6 +215,8 @@ endif
 ifeq ($(DEB_TARGET_ARCH),powerpcspe)
   debian_patches += powerpc_remove_many
   debian_patches += powerpc_nofprs
+  # fix-powerpcspe.diff only partially applied upstream
+  debian_patches += fix-powerpcspe
 endif
 
 #debian_patches += link-libs
@@ -238,13 +246,9 @@ debian_patches += arm-multilib-defaults
 
 ifeq ($(DEB_CROSS),yes)
   debian_patches += cross-fixes
-  ifeq ($(with_deps_on_target_arch_pkgs),yes)
-    debian_patches += cross-ma-install-location
-  else
-    debian_patches += cross-install-location
-    ifeq ($(with_d),yes)
-      debian_patches += gdc-cross-install-location
-    endif
+  debian_patches += cross-install-location
+  ifeq ($(with_d),yes)
+    debian_patches += gdc-cross-install-location
   endif
 endif
 
@@ -293,11 +297,6 @@ ifeq ($(biarch64),yes)
   endif
 endif
 debian_patches += gcc-multilib-multiarch
-ifneq ($(trunk_build),yes)
-ifeq ($(with_ibm_branch),yes)
-  debian_patches += powerpc64le-multilib-definitions
-endif
-endif
 
 ifneq (,$(filter $(derivative),Ubuntu))
   ifeq (,$(filter $(distrelease),dapper hardy intrepid jaunty karmic lucid maverick))
@@ -313,8 +312,9 @@ debian_patches += fix-ffi_call_VFP-with-no-VFP-argument
 #debian_patches += pr61106
 
 # Ada patches needed for both the stable package and snapshot builds
-debian_patches += ada-ppc64
+debian_patches += ada-749574
 debian_patches += ada-mips
+debian_patches += ada-ppc64
 
 series_stamp = $(stampdir)/02-series-stamp
 series: $(series_stamp)

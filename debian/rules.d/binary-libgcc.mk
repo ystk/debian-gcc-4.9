@@ -61,7 +61,7 @@ header_files = \
 		    && echo $(gcc_lib_dir)/include-fixed/$$h; \
 		done) \
 	$(shell for d in \
-		  asm bits cilk gnu linux $(TARGET_ALIAS) \
+		  asm bits cilk gnu linux sanitizer $(TARGET_ALIAS) \
 		  $(subst $(DEB_TARGET_GNU_CPU),$(biarch_cpu),$(TARGET_ALIAS)); \
 		do \
 		  test -e $(d)/$(gcc_lib_dir)/include/$$d \
@@ -235,6 +235,7 @@ define __do_gcc_devels2
 	$(if $(filter yes, $(with_atomic)),
 		$(call install_gcc_lib,libatomic,$(ATOMIC_SONAME),$(1),$(2))
 	)
+	$(if $(empty_sanitizer_packages),,
 	$(if $(filter yes, $(with_asan)),
 		$(call install_gcc_lib,libasan,$(ASAN_SONAME),$(1),$(2))
 		mv $(4)/libasan_preinit.o debian/$(2)/$(3)/;
@@ -247,6 +248,7 @@ define __do_gcc_devels2
 	))
 	$(if $(filter yes, $(with_ubsan)),
 		$(call install_gcc_lib,libubsan,$(UBSAN_SONAME),$(1),$(2))
+	)
 	)
 	$(if $(filter yes, $(with_vtv)),
 		$(call install_gcc_lib,libvtv,$(VTV_SONAME),$(1),$(2))

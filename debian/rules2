@@ -265,6 +265,10 @@ ifneq ($(with_asan),yes)
   CONFARGS += --disable-libsanitizer
 endif
 
+ifeq ($(empty_sanitizer_packages),yes)
+  CONFARGS += --disable-libsanitizer
+endif
+
 ifneq ($(with_qmath),yes)
   CONFARGS += --disable-libquadmath
 endif
@@ -474,10 +478,7 @@ ifneq (,$(findstring ia64-linux,$(DEB_TARGET_GNU_TYPE)))
 endif
 
 ifneq (,$(findstring sh4-linux,$(DEB_TARGET_GNU_TYPE)))
-  ifeq ($(multilib),yes)
-    CONFARGS += --with-multilib-list=m4,m4-nofpu
-  endif
-  CONFARGS += --with-cpu=sh4
+  CONFARGS += --with-cpu=sh4 --with-multilib-list=m4,m4-nofpu
 endif
 
 ifneq (,$(findstring m68k-linux,$(DEB_TARGET_GNU_TYPE)))
@@ -580,7 +581,7 @@ endif
 
 ifneq (,$(findstring mips64el-linux-gnuabi64,$(DEB_TARGET_GNU_TYPE)))
   CONFARGS += --with-mips-plt
-  CONFARGS += --with-arch-64=mips3 --with-tune-64=mips64
+  CONFARGS += --with-arch-64=mips64 --with-tune-64=mips64r2
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
@@ -638,11 +639,8 @@ CONFARGS += \
 
 ifeq ($(DEB_CROSS),yes)
   CONFARGS += \
-	--program-prefix=$(TARGET_ALIAS)-
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    CONFARGS += \
+	--program-prefix=$(TARGET_ALIAS)- \
 	--includedir=/$(PFL)/include
-  endif
 endif
 
 ifeq ($(with_bootstrap),off)
@@ -781,33 +779,21 @@ endif
 
 # PFL is the installation prefix with DEB_TARGET_GNU_TYPE attached for cross builds
 ifeq ($(DEB_CROSS),yes)
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    PFL		= $(PF)/$(DEB_TARGET_GNU_TYPE)
-  else
-    PFL		= $(PF)
-  endif
+  PFL		= $(PF)/$(DEB_TARGET_GNU_TYPE)
 else
   PFL		= $(PF)
 endif
 
 # RPF is the base prefix or installation prefix with DEB_TARGET_GNU_TYPE attached for cross builds
 ifeq ($(DEB_CROSS),yes)
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    RPF		= $(PF)/$(DEB_TARGET_GNU_TYPE)
-  else
-    RPF		=
-  endif
+  RPF		= $(PF)/$(DEB_TARGET_GNU_TYPE)
 else
   RPF		=
 endif
 
 ifeq ($(with_multiarch_lib),yes)
   ifeq ($(DEB_CROSS),yes)
-    ifneq ($(with_deps_on_target_arch_pkgs),yes)
-      libdir	= lib
-    else
-      libdir	= lib/$(DEB_TARGET_MULTIARCH)
-    endif
+    libdir	= lib
   else
     libdir	= lib/$(DEB_TARGET_MULTIARCH)
   endif
@@ -833,9 +819,7 @@ buildlibdir	= $(builddir)/$(TARGET_ALIAS)
 gcc_subdir_name = gcc
 ifneq ($(single_package),yes)
   ifeq ($(DEB_CROSS),yes)
-    ifneq ($(with_deps_on_target_arch_pkgs),yes)
-      gcc_subdir_name = gcc-cross
-    endif
+    gcc_subdir_name = gcc-cross
   endif
 endif
 
@@ -857,15 +841,11 @@ d_l= debian/$(p_l)
 d_d= debian/$(p_d)
 
 ifeq ($(DEB_CROSS),yes)
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    usr_lib = $(PFL)/lib
+  usr_lib = $(PFL)/lib
 
-    # sh4 has multilib. base is sh4-linux-gnu. See #663028.
-    ifneq (,$(findstring sh4-linux,$(DEB_TARGET_GNU_TYPE)))
-      usr_lib = $(PFL)/lib/sh4-linux-gnu/
-    endif
-  else
-    usr_lib = $(PFL)/$(libdir)
+  # sh4 has multilib. base is sh4-linux-gnu. See #663028.
+  ifneq (,$(findstring sh4-linux,$(DEB_TARGET_GNU_TYPE)))
+    usr_lib = $(PFL)/lib/sh4-linux-gnu/
   endif
 else
   usr_lib = $(PFL)/$(libdir)
@@ -941,11 +921,7 @@ ifneq ($(DEB_CROSS),yes)
     cxx_inc_dir	= $(PF)/include/c++/$(GCC_VERSION)
   endif
 else
-  ifeq ($(with_deps_on_target_arch_pkgs),yes)
-    cxx_inc_dir	= $(PF)/include/c++/$(BASE_VERSION)
-  else
-    cxx_inc_dir	= $(PF)/$(TARGET_ALIAS)/include/c++/$(GCC_VERSION)
-  endif
+  cxx_inc_dir	= $(PF)/$(TARGET_ALIAS)/include/c++/$(GCC_VERSION)
 endif
 
 # FIXME: MULTIARCH_DIRNAME needed for g++-multiarch-incdir.diff
@@ -1215,7 +1191,15 @@ else
 		; \
 	  echo $$? > status; \
 	) 2>&1 | tee bootstrap-protocol
-	s=`cat status`; rm -f status; test $$s -eq 0
+	s=`cat status`; rm -f status; \
+	if [ $$s -ne 0 ]; then \
+	  for log in $$(find $(builddir) -name config.log); do \
+	    echo LOGFILE START $$log; \
+	    cat $$log; \
+	    echo LOGFILE END $$log; \
+	  done; \
+	fi; \
+	test $$s -eq 0
 endif
 endif
 	-chmod 755 $(srcdir)/contrib/warn_summary
@@ -1724,13 +1708,8 @@ ifneq ($(DEB_CROSS),yes)
   p_lgcc = libgcc$(GCC_SONAME)
 else
   # only triggered if DEB_CROSS set
-  ifneq ($(with_deps_on_target_arch_pkgs),yes)
-    p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
-    p_xbase = gcc$(pkg_ver)$(cross_bin_arch)-base
-  else
-    p_base = gcc$(pkg_ver)-base
-    p_xbase = $(p_cpp)
-  endif
+  p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
+  p_xbase = gcc$(pkg_ver)$(cross_bin_arch)-base
   p_cpp  = cpp$(pkg_ver)$(cross_bin_arch)
   p_gcc  = gcc$(pkg_ver)$(cross_bin_arch)
   p_cxx  = g++$(pkg_ver)$(cross_bin_arch)
@@ -1765,13 +1744,16 @@ ifeq ($(single_package),yes)
   include debian/rules.d/binary-snapshot.mk
 else
 
+ifneq ($(with_base_only),yes)
 ifneq ($(DEB_CROSS),yes)
 ifeq ($(with_source),yes)
   include debian/rules.d/binary-source.mk
 endif
 endif
+endif
 
 ifneq ($(BACKPORT),true)
+
 ifeq ($(with_gccxbase),yes)
   include debian/rules.d/binary-base.mk
 endif
@@ -1779,6 +1761,8 @@ endif
 ifeq ($(with_gccbase),yes)
   include debian/rules.d/binary-base.mk
 endif
+
+ifneq ($(with_base_only),yes)
 
 # always include to get some definitions
 include debian/rules.d/binary-libgcc.mk
@@ -1907,8 +1891,8 @@ ifeq ($(with_neon),yes)
   include debian/rules.d/binary-neon.mk
 endif
 
-endif
-
+endif # with_base_only
+endif # BACKPORT
 endif # ($(single_package),yes)
 
 # ----------------------------------------------------------------------
@@ -2123,8 +2107,8 @@ endif
 	  mv $(d)/$(PF)/include/cilk $(d)/$(gcc_lib_dir)/include/. ;\
 	fi
 
-# FIXME: libjava/classpath not correctly patched
 ifeq ($(with_java),yes)
+# FIXME: libjava/classpath not correctly patched
 	-if [ -d $(d)/$(PF)/lib/gcj-$(GCC_VERSION)-$(GCJ_SONAME) ]; then \
 	  ls -l $(d)/$(PF)/lib/gcj-$(GCC_VERSION)-$(GCJ_SONAME); \
 	  mv $(d)/$(PF)/lib/gcj-$(GCC_VERSION)-$(GCJ_SONAME)/* \
@@ -2282,10 +2266,6 @@ binary-indep: $(foreach i,$(indep_binaries),$(binary_stamp)-$(i))
 
 source diff:
 	@echo >&2 'source and diff are obsolete - use dpkg-source -b'; false
-
-xxx:
-	@echo $(arch_binaries)
-	@echo $(with_lib32vtv) / $(with_libx32vtv)
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary
