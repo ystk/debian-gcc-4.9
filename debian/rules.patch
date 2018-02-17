@@ -316,6 +316,17 @@ debian_patches += ada-749574
 debian_patches += ada-mips
 debian_patches += ada-ppc64
 
+# Backport of retpoline support by HJ Lu
+debian_patches += 0001-i386-Move-struct-ix86_frame-to-machine_function
+debian_patches += 0002-i386-Use-reference-of-struct-ix86_frame-to-avoid-copy
+debian_patches += 0003-i386-Use-const-reference-of-struct-ix86_frame-to-avoi
+debian_patches += 0004-x86-Add-mindirect-branch
+debian_patches += 0005-x86-Add-mfunction-return
+debian_patches += 0006-x86-Add-mindirect-branch-register
+debian_patches += 0007-x86-Add-V-register-operand-modifier
+debian_patches += 0008-x86-Disallow-mindirect-branch-mfunction-return-with-m
+debian_patches += 0009-Use-INVALID_REGNUM-in-indirect-thunk-processing
+
 series_stamp = $(stampdir)/02-series-stamp
 series: $(series_stamp)
 $(series_stamp):
